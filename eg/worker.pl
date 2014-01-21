@@ -18,6 +18,9 @@ $ur->run(sub {
         my @tags = @{$post->{tags}};
         my $nick = $post->{nickname};
         my $text = $post->{text};
+        if($post->{is_message_log}){ # PlusPlus and other.
+            return;
+        }
         warn sprintf('%sは「%s」と言いました', $nick, $text);
     });
 });
