@@ -3,9 +3,11 @@ use 5.008005;
 use strict;
 use warnings;
 use parent 'Yancha::Client';
+use AnyEvent;
 use WWW::Mechanize;
 use URI;
 use JSON;
+use Carp;
 
 our $VERSION = "0.01";
 
@@ -34,6 +36,17 @@ sub twitter_login {
     return $self->token;
 }
 
+sub login {
+    my ($self, $user, $login_point) = @_;
+    $login_point ||= 'login'; 
+    $self->SUPER::login($self->{url}, $login_point, {nick => $user});
+}
+
+sub _tags {
+    my $self = shift;
+    keys %{$self->{tags}} if $self->{tags};
+}
+
 sub _path {
     my ($self, $path) = @_;
     my $uri = URI->new($self->{url});
@@ -51,8 +64,9 @@ sub _mech {
 }
 
 sub post {
-    my ($self, $text) = @_;
+    my ($self, $text, @tags) = @_;
     my $post_url = $self->_path('/api/post');
+    $text = join(' ', $text, map { '#'.$_ } @tags) if @tags;
     $self->_mech->post($post_url, {token => $self->token, text => $text});
 }
 
@@ -74,8 +88,20 @@ sub search {
 
 sub run {
     my ( $self, $subref ) = @_;
-    $self->connect;
-    $self->{socket}->emit('token login', $self->token);
+
+    my @tags = $self->_tags;
+    my $cv = AnyEvent->condvar;
+    $cv->begin;
+
+    $self->connect or croak('could not connect');
+    $self->socket->on('token login' => sub {
+        my ($client, $socket) = @_;
+        my $status = $socket->{status};
+        carp('login failure') unless $status eq 'ok';
+        $self->set_tags( @tags, sub { $cv->end } );
+    });
+
+    $self->socket->emit('token login', $self->token);
     $self->SUPER::run($subref);
 }
 
