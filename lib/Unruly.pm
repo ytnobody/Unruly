@@ -145,7 +145,15 @@ Unruly - It's new $module
 
 =head1 DESCRIPTION
 
-Unruly is ...
+Unruly is a client lib for Yancha L<http://yancha.hachiojipm.org>.
+
+=head1 OPTIONS
+
+=head2 url (string)
+
+=head2 tags (hashref)
+
+=head2 token_only (integer [1 = stealth-mode, 0 = normal, default is 0])
 
 =head1 LICENSE
 

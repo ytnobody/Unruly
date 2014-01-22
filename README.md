@@ -7,14 +7,11 @@ Unruly - It's new $module
     use Unruly;
     use AnyEvent;
     use utf8;
-    
 
     my $cv = AnyEvent->condvar;
-    
 
     my $c = Unruly->new(url => 'http://yancha.hachiojipm.org', tags => {PUBLIC => 1});
     $c->login('waiwai');
-    
 
     $c->run(sub {
         my ($client, $socket) = @_;
@@ -28,7 +25,6 @@ Unruly - It's new $module
             }
         });
     });
-    
 
     $cv->wait;
 
@@ -36,7 +32,15 @@ Unruly - It's new $module
 
 # DESCRIPTION
 
-Unruly is ...
+Unruly is a client lib for Yancha [http://yancha.hachiojipm.org](http://yancha.hachiojipm.org).
+
+# OPTIONS
+
+## url (string)
+
+## tags (hashref)
+
+## token\_only (integer \[1 = stealth-mode, 0 = normal, default is 0\])
 
 # LICENSE
 
