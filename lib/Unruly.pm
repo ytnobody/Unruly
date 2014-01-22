@@ -37,9 +37,10 @@ sub twitter_login {
 }
 
 sub login {
-    my ($self, $user, $login_point) = @_;
-    $login_point ||= 'login'; 
-    $self->SUPER::login($self->{url}, $login_point, {nick => $user});
+    my ($self, $user, $opts) = @_;
+    my $login_point   = $opts->{login_point} || 'login';
+    my $profile_image = $opts->{image}       || undef;
+    $self->SUPER::login($self->{url}, $login_point, {nick => $user, profile_image_url => $profile_image});
 }
 
 sub _tags {
