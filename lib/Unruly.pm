@@ -40,7 +40,8 @@ sub login {
     my ($self, $user, $opts) = @_;
     my $login_point   = $opts->{login_point} || 'login';
     my $profile_image = $opts->{image}       || undef;
-    $self->SUPER::login($self->{url}, $login_point, {nick => $user, profile_image_url => $profile_image});
+    my $token_only    = $opts->{token_only}  || 0;
+    $self->SUPER::login($self->{url}, $login_point, {nick => $user, profile_image_url => $profile_image, token_only => $token_only});
 }
 
 sub _tags {
@@ -120,12 +121,12 @@ Unruly - It's new $module
     use Unruly;
     use AnyEvent;
     use utf8;
-    
+
     my $cv = AnyEvent->condvar;
-    
+
     my $c = Unruly->new(url => 'http://yancha.hachiojipm.org', tags => {PUBLIC => 1});
     $c->login('waiwai');
-    
+
     $c->run(sub {
         my ($client, $socket) = @_;
         $socket->on('user message' => sub {
@@ -138,7 +139,7 @@ Unruly - It's new $module
             }
         });
     });
-    
+
     $cv->wait;
 
 
