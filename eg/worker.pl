@@ -4,10 +4,11 @@ use strict;
 use warnings;
 use AnyEvent;
 use Unruly;
+use Data::Dumper;
 use utf8;
 
-my $ur = Unruly->new(url => 'http://yancha.hachiojipm.org', tags => {UNRULYBUILD => 1});
-$ur->twitter_login('ytnobody', '******');
+my $ur = Unruly->new(url => 'http://yancha.hachiojipm.org', tags => {UNRULYBUILD => 1}, session_expire => 10, when_reconnect => sub {warn Dumper(@_)});
+$ur->login('testbot');
 
 my $cv = AnyEvent->condvar;
 
