@@ -15,9 +15,6 @@ sub twitter_login {
     my ($self, $user, $password, $login_point) = @_;
     return $self->token if $self->token;
 
-    $self->{__login_method} = 'twitter_login';
-    $self->{__login_params} = [$user, $password, $login_point];
-
     $login_point ||= '/login/twitter/start';
 
     my $login_url  = $self->_path($login_point);
@@ -41,14 +38,9 @@ sub twitter_login {
 
 sub login {
     my ($self, $user, $opts) = @_;
-
-    $self->{__login_method} = 'login';
-    $self->{__login_params} = [$user, $opts];
-
     my $login_point   = $opts->{login_point} || 'login';
     my $profile_image = $opts->{image}       || undef;
     my $token_only    = $opts->{token_only}  || 0;
-    
     $self->SUPER::login($self->{url}, $login_point, {nick => $user, profile_image_url => $profile_image, token_only => $token_only});
 }
 
@@ -99,23 +91,9 @@ sub search {
 sub run {
     my ( $self, $subref ) = @_;
 
+    my @tags = $self->_tags;
     my $cv = AnyEvent->condvar;
     $cv->begin;
-    $self->{__condvar} = $cv;
-
-    $self->{__user_defined_logic} = $subref;
-
-    $self->_token_login;
-    $self->_run_token_keeper;
-
-    $self->SUPER::run($subref);
-}
-
-sub _token_login {
-    my $self = shift;
-
-    my @tags = $self->_tags;
-    my $cv = $self->{__condvar};
 
     $self->connect or croak('could not connect');
     $self->socket->on('token login' => sub {
@@ -126,27 +104,8 @@ sub _token_login {
     });
 
     $self->socket->emit('token login', $self->token);
+    $self->SUPER::run($subref);
 }
-
-sub _run_token_keeper {
-    my $self = shift;
-
-    my $token_expire = $self->{token_expire} || 86400;
-    $self->{__token_keeper} = AnyEvent->timer(
-        after => $token_expire, 
-        interval => $token_expire, 
-        cb => sub {
-            my $login_method = $self->{__login_method};
-            my @login_params = @{$self->{__login_params}};
-            my $subref = $self->{__user_defined_logic};
-            my $reconnect_trigger = $self->{when_reconnect} || sub {};
-
-            $self->$login_method(@login_params);
-            $reconnect_trigger->($self->SUPER::run($subref));
-        },
-    );
-}
-
 
 1;
 __END__
