@@ -40,7 +40,41 @@ Unruly is a client lib for Yancha [http://yancha.hachiojipm.org](http://yancha.h
 
 ## tags (hashref)
 
-## token\_only (integer \[1 = stealth-mode, 0 = normal, default is 0\])
+# METHOD
+
+## login($nickname, $opts)
+
+    $unruly->login('yourbot', {image => 'http://example.com/prof.png'}); 
+
+Login to yancha. You may specify following options
+
+- token\_only => $bool (1 = stealth-mode, 0 = normal, default is 0)
+- image => $image\_url
+
+## twitter\_login($twitter\_id, $twitter\_password)
+
+    $unruly->twitter_login('your_twitter_id', 'seCreT');
+
+Login to yancha with twitter account
+
+## post($message, @tags)
+
+    $unruly->post('Hello, world!', qw/PUBLIC PRIVATE/);
+
+Post a message to yancha.
+
+## hidden\_post($message, @tags)
+
+Post a "NOREC" message to yancha.
+
+## run($coderef);
+
+    $unruly->run(sub {
+        my ($client, $socket) = @_;
+        $socket->on('event name' => sub { ... });
+    });
+
+Start event-loop.
 
 # LICENSE
 

@@ -32,7 +32,9 @@ sub twitter_login {
     my ($jump_to) = $mech->content =~ m{<meta http-equiv="refresh" content="0;url=(.*?)">};
     $mech->get($jump_to);
     my $token = $mech->cookie_jar->{COOKIES}{$domain}{'/'}{yancha_auto_login_token}[1];
+    croak('failure to login') unless $token;
     $self->token($token);
+    $self->{__user} = $user;
     return $self->token;
 }
 
@@ -41,7 +43,10 @@ sub login {
     my $login_point   = $opts->{login_point} || 'login';
     my $profile_image = $opts->{image}       || undef;
     my $token_only    = $opts->{token_only}  || 0;
-    $self->SUPER::login($self->{url}, $login_point, {nick => $user, profile_image_url => $profile_image, token_only => $token_only});
+    my $rtn = $self->SUPER::login($self->{url}, $login_point, {nick => $user, profile_image_url => $profile_image, token_only => $token_only});
+    croak('failure to login') unless $self->token;
+    $self->{__user} = $user;
+    return $rtn;
 }
 
 sub _tags {
@@ -67,9 +72,14 @@ sub _mech {
 
 sub post {
     my ($self, $text, @tags) = @_;
-    my $post_url = $self->_path('/api/post');
     $text = join(' ', $text, map { '#'.$_ } @tags) if @tags;
-    $self->_mech->post($post_url, {token => $self->token, text => $text});
+    $self->socket->emit('user message' => $text);
+}
+
+sub hidden_post {
+    my ($self, $text, @tags) = @_;
+    push @tags, 'NOREC';
+    $self->post($text, @tags);
 }
 
 sub users {
@@ -96,6 +106,7 @@ sub run {
     $cv->begin;
 
     $self->connect or croak('could not connect');
+
     $self->socket->on('token login' => sub {
         my ($client, $socket) = @_;
         my $status = $socket->{status};
@@ -104,7 +115,13 @@ sub run {
     });
 
     $self->socket->emit('token login', $self->token);
+
     $self->SUPER::run($subref);
+}
+
+sub myname {
+    my $self = shift;
+    $self->{__user};
 }
 
 1;
@@ -153,7 +170,46 @@ Unruly is a client lib for Yancha L<http://yancha.hachiojipm.org>.
 
 =head2 tags (hashref)
 
-=head2 token_only (integer [1 = stealth-mode, 0 = normal, default is 0])
+=head1 METHOD
+
+=head2 login($nickname, $opts)
+
+    $unruly->login('yourbot', {image => 'http://example.com/prof.png'}); 
+
+Login to yancha. You may specify following options
+
+=over 4
+
+=item token_only => $bool (1 = stealth-mode, 0 = normal, default is 0)
+
+=item image => $image_url
+
+=back 
+
+=head2 twitter_login($twitter_id, $twitter_password)
+
+    $unruly->twitter_login('your_twitter_id', 'seCreT');
+
+Login to yancha with twitter account
+
+=head2 post($message, @tags)
+
+    $unruly->post('Hello, world!', qw/PUBLIC PRIVATE/);
+
+Post a message to yancha.
+
+=head2 hidden_post($message, @tags)
+
+Post a "NOREC" message to yancha.
+
+=head2 run($coderef);
+
+    $unruly->run(sub {
+        my ($client, $socket) = @_;
+        $socket->on('event name' => sub { ... });
+    });
+
+Start event-loop.
 
 =head1 LICENSE
 
