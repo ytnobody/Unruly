@@ -9,8 +9,6 @@ use utf8;
 my $ur = Unruly->new(
     url  => 'http://yancha.hachiojipm.org',
     tags => {PUBLIC => 1},
-    ping_interval => 5,
-    ping_timeout => 20,
 );
 $ur->login('unruly');
 
