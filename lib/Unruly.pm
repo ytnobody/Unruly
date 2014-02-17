@@ -13,7 +13,8 @@ our $VERSION = "0.02";
 
 sub new {
     my ($class, %opts) = @_;
-    $opts{ping_interval} ||= 30;
+    $opts{ping_interval} ||= 20;
+    $opts{connection_lifetime} ||= 30;
     $opts{when_lost_connection} ||= sub { die 'Lost connection' }; 
     $class->SUPER::new(%opts);
 }
@@ -121,10 +122,22 @@ sub connect {
     $self->{__cv} = AnyEvent->condvar;
     $self->{__cv}->begin;
 
-    $self->{timer} ||= AnyEvent->timer(
+    $self->{__pong_time} = time;
+
+    $self->{__ping_timer} ||= AnyEvent->timer(
         after    => $self->{ping_interval}, 
         interval => $self->{ping_interval}, 
         cb       => sub { $self->ping },
+    );
+
+    $self->{__life_timer} ||= AnyEvent->timer(
+        after    => 1,
+        interval => 1,
+        cb => sub {
+            if (time - $self->{__pong_time} >= $self->{connection_lifetime}) {
+                $self->{when_lost_connection}->($self);
+            }
+        }
     );
 
     $self->SUPER::connect or croak('could not connect');
@@ -138,8 +151,8 @@ sub connect {
 
     $self->socket->on('pong' => sub {
         my $received = $_[1];
-        unless ($self->token eq $received) {
-            $self->{when_lost_connection}->($self);
+        if ($self->token eq $received) {
+            $self->{__pong_time} = time;
         };
     });
 
@@ -217,7 +230,11 @@ Listening tags (hashref)
 
 =head2 ping_interval 
 
-Interval in seconds for sending ping (integer, default is 30)
+Interval in seconds for sending ping (integer, default is 20)
+
+=head2 connection_lifetime
+
+Lifetime in seconds of connection without pong (integer, default is 30);
 
 =head2 when_lost_connection 
 

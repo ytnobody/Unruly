@@ -46,7 +46,11 @@ Listening tags (hashref)
 
 ## ping\_interval 
 
-Interval in seconds for sending ping (integer, default is 30)
+Interval in seconds for sending ping (integer, default is 20)
+
+## connection\_lifetime
+
+Lifetime in seconds of connection without pong (integer, default is 30);
 
 ## when\_lost\_connection 
 
