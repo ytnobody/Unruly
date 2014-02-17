@@ -9,12 +9,14 @@ use utf8;
 my $ur = Unruly->new(
     url  => 'http://yancha.hachiojipm.org',
     tags => {PUBLIC => 1},
+    ping_interval => 15,
 );
 $ur->login('unruly');
 
 my $cv = AnyEvent->condvar;
 
 warn $ur->myname;
+
 
 $ur->run(sub {
     my ( $client, $socket ) = @_;

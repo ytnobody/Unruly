@@ -9,7 +9,14 @@ use URI;
 use JSON;
 use Carp;
 
-our $VERSION = "0.01";
+our $VERSION = "0.02";
+
+sub new {
+    my ($class, %opts) = @_;
+    $opts{ping_interval} ||= 30;
+    $opts{when_lost_connection} ||= sub { die 'Lost connection' }; 
+    $class->SUPER::new(%opts);
+}
 
 sub twitter_login {
     my ($self, $user, $password, $login_point) = @_;
@@ -35,6 +42,11 @@ sub twitter_login {
     croak('failure to login') unless $token;
     $self->token($token);
     $self->{__user} = $user;
+    $self->{__login} = {
+        method => 'twitter_login', 
+        params => [$user, $password, $login_point],
+    };
+    $self->connect;
     return $self->token;
 }
 
@@ -46,6 +58,11 @@ sub login {
     my $rtn = $self->SUPER::login($self->{url}, $login_point, {nick => $user, profile_image_url => $profile_image, token_only => $token_only});
     croak('failure to login') unless $self->token;
     $self->{__user} = $user;
+    $self->{__login} = {
+        method => 'login', 
+        params => [$user, $opts],
+    };
+    $self->connect;
     return $rtn;
 }
 
@@ -98,30 +115,54 @@ sub search {
     return JSON->new->utf8(1)->decode($self->_mech->res->content);
 }
 
-sub run {
-    my ( $self, $subref ) = @_;
+sub connect {
+    my $self = shift;
 
-    my @tags = $self->_tags;
-    my $cv = AnyEvent->condvar;
-    $cv->begin;
+    $self->{__cv} = AnyEvent->condvar;
+    $self->{__cv}->begin;
 
-    $self->connect or croak('could not connect');
+    $self->{timer} ||= AnyEvent->timer(
+        after    => $self->{ping_interval}, 
+        interval => $self->{ping_interval}, 
+        cb       => sub { $self->ping },
+    );
+
+    $self->SUPER::connect or croak('could not connect');
 
     $self->socket->on('token login' => sub {
         my ($client, $socket) = @_;
         my $status = $socket->{status};
         carp('login failure') unless $status eq 'ok';
-        $self->set_tags( @tags, sub { $cv->end } );
+        $self->set_tags( $self->_tags, sub { $self->{__cv}->end } );
+    });
+
+    $self->socket->on('pong' => sub {
+        my $received = $_[1];
+        unless ($self->token eq $received) {
+            $self->{when_lost_connection}->($self);
+        };
     });
 
     $self->socket->emit('token login', $self->token);
 
-    $self->SUPER::run($subref);
+    1;
 }
 
 sub myname {
     my $self = shift;
     $self->{__user};
+}
+
+sub disconnect {
+    my $self = shift;
+    $self->socket->close;
+    $self->{socket} = undef;
+    warn 'Connection was closed';
+}
+
+sub ping {
+    my $self = shift;
+    $self->socket->emit('ping', $self->token);
 }
 
 1;
@@ -166,9 +207,13 @@ Unruly is a client lib for Yancha L<http://yancha.hachiojipm.org>.
 
 =head1 OPTIONS
 
-=head2 url (string)
+=head2 url - Yancha server URL (string)
 
-=head2 tags (hashref)
+=head2 tags - Listening tags (hashref)
+
+=head2 ping_interval - Interval in seconds for sending ping (integer, default is 30)
+
+=head2 when_lost_connection - Callback subroutine that executes when connection was lost (coderef, default is sub { die 'Lost connection'})
 
 =head1 METHOD
 
