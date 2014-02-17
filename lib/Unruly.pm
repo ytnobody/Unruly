@@ -172,7 +172,7 @@ __END__
 
 =head1 NAME
 
-Unruly - It's new $module
+Unruly - Yancha client with twitter auth
 
 =head1 SYNOPSIS
 

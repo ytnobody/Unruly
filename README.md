@@ -1,6 +1,6 @@
 # NAME
 
-Unruly - It's new $module
+Unruly - Yancha client with twitter auth
 
 # SYNOPSIS
 
