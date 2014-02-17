@@ -207,13 +207,21 @@ Unruly is a client lib for Yancha L<http://yancha.hachiojipm.org>.
 
 =head1 OPTIONS
 
-=head2 url - Yancha server URL (string)
+=head2 url 
 
-=head2 tags - Listening tags (hashref)
+Yancha server URL (string)
 
-=head2 ping_interval - Interval in seconds for sending ping (integer, default is 30)
+=head2 tags 
 
-=head2 when_lost_connection - Callback subroutine that executes when connection was lost (coderef, default is sub { die 'Lost connection'})
+Listening tags (hashref)
+
+=head2 ping_interval 
+
+Interval in seconds for sending ping (integer, default is 30)
+
+=head2 when_lost_connection 
+
+Callback subroutine that executes when connection was lost (coderef, default is sub { die 'Lost connection'})
 
 =head1 METHOD
 
