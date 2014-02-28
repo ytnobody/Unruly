@@ -92,6 +92,10 @@ Post a "NOREC" message to yancha.
 
 Start event-loop.
 
+# SETUP SCRIPT
+
+This distribution includes unruly\_setup.pl - a setup script for develop a original bot.
+
 # LICENSE
 
 Copyright (C) ytnobody.

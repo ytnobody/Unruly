@@ -9,7 +9,7 @@ use URI;
 use JSON;
 use Carp;
 
-our $VERSION = "0.03";
+our $VERSION = "0.04";
 
 sub new {
     my ($class, %opts) = @_;
@@ -280,6 +280,10 @@ Post a "NOREC" message to yancha.
     });
 
 Start event-loop.
+
+=head1 SETUP SCRIPT
+
+This distribution includes unruly_setup.pl - a setup script for develop a original bot.
 
 =head1 LICENSE
 
