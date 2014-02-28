@@ -35,11 +35,16 @@ sub _mkdir ($) {
     return File::Spec->catdir(@path);
 }
 
-sub _spew ($$) {
-    my ($file, $data) = @_;
+sub _spew ($$;$) {
+    my ($in_path, $data, $mode) = @_;
+    my @path = split(/(\/|\\|\:\:)/, $in_path);
+    my $file = File::Spec->catfile(@path);
     open my $fh, '>', $file or croak $!;
     print $fh $data;
     close $fh;
+    if ($mode) {
+        chmod $mode, $file;
+    }
 }
 
 my $bot_name = shift @ARGV;
@@ -70,10 +75,14 @@ my $parent_namespace = $bot_name =~ s/::(.+?)$//r;
 
 # create project directory
 my $base_dir = _mkdir($dist_name);
+my $base_dir_fullpath = File::Spec->rel2abs($base_dir);
 
 # create worker.pl
 $template =~ s/__bot_name__/$bot_name/g;
-_spew(File::Spec->catfile($base_dir, 'worker.pl'), $template);
+_spew("$base_dir/worker.pl", $template, 0755);
+
+# define miscellaneous variables
+my $username = getpwuid($>);
 
 # define basal cpanfile
 my $cpanfile_data = <<'EOF';
@@ -88,17 +97,65 @@ requires 'WWW::Mechanize';
 
 EOF
 
+# define run file for daemontools
+my $runfile_data = <<'EOF';
+#!/bin/sh
+BOT_USER=__user_name__
+cd __base_dir__
+exec 2>&1
+exec setuidgid \$BOT_USER ./worker.pl
+sleep 5 ### reconnect interval
+EOF
+
+# define log/run file for daemontools
+my $logrunfile_data = <<EOF;
+#!/bin/sh
+exec 2>&1
+exec multilog t ./main
+EOF
+
+# define run file for Server::Starter
+my $start_server_data = <<'EOF';
+#!/bin/sh
+cd __base_dir__ 
+start_server --interval=5 -- ./worker.pl
+EOF
+
+# define Procfile for Proclet
+my $procfile_data = <<EOF;
+bot: ./worker.pl
+EOF
+
 if ($type eq 'daemontools') {
+    print "Please input username for setuidgid [$username]: ";
+    my $_username = _getline || $username;
+
+    print "Please input path for service [$base_dir_fullpath]: ";
+    my $_base_dir = _getline || $base_dir_fullpath;
+
+    $runfile_data =~ s/__user_name__/$_username/g;
+    $runfile_data =~ s/__base_dir__/$_base_dir/g;
+
+    _mkdir("$base_dir/service/$dist_name/log");
+    _spew("$base_dir/service/$dist_name/run", $runfile_data, 0755);
+    _spew("$base_dir/service/$dist_name/log/run", $logrunfile_data, 0755);
 }
 elsif ($type eq 'Server::Starter') {
+    print "Please input path for service [$base_dir_fullpath]: ";
+    my $_base_dir = _getline || $base_dir_fullpath;
+
+    $start_server_data =~ s/__base_dir__/$_base_dir/g;
+
     $cpanfile_data .= sprintf("requires '%s';\n", 'Server::Starter');
+    _spew("$base_dir/run", $start_server_data, 0755);
 }
 elsif ($type eq 'Proclet') {
     $cpanfile_data .= sprintf("requires '%s';\n", 'Proclet');
+    _spew("$base_dir/Procfile", $procfile_data);
 }
 
 # create cpanfile
-_spew(File::Spec->catfile($base_dir, 'cpanfile'), $cpanfile_data);
+_spew("$base_dir/cpanfile", $cpanfile_data);
 
 # git init
 chdir $base_dir;
@@ -108,6 +165,7 @@ system(qw/git init/);
 system(qw/git submodule add/, 'git://github.com/ytnobody/Unruly.git', File::Spec->catfile('submodules','Unruly'));
 
 __DATA__
+#!/usr/bin/env perl
 use strict;
 use warnings;
 use utf8;
