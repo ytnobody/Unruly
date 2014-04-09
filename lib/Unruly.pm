@@ -9,7 +9,7 @@ use URI;
 use JSON;
 use Carp;
 
-our $VERSION = "0.04";
+our $VERSION = "0.05";
 
 sub new {
     my ($class, %opts) = @_;
@@ -178,6 +178,18 @@ sub ping {
     $self->socket->emit('ping', $self->token);
 }
 
+sub join {
+    my ($self, $channel) = @_;
+    $self->{tags}{$channel} = 1;
+    $self->set_tags( $self->_tags, sub { $self->{__cv}->end } );
+}
+
+sub leave {
+    my ($self, $channel) = @_;
+    delete $self->{tags}{$channel};
+    $self->set_tags( $self->_tags, sub { $self->{__cv}->end } );
+}
+
 1;
 __END__
 
@@ -280,6 +292,14 @@ Post a "NOREC" message to yancha.
     });
 
 Start event-loop.
+
+=head2 join($tag)
+
+Join to specified tag.
+
+=head2 leave($tag)
+
+Leave from specified tag.
 
 =head1 SETUP SCRIPT
 

@@ -92,6 +92,14 @@ Post a "NOREC" message to yancha.
 
 Start event-loop.
 
+## join($tag)
+
+Join to specified tag.
+
+## leave($tag)
+
+Leave from specified tag.
+
 # SETUP SCRIPT
 
 This distribution includes unruly\_setup.pl - a setup script for develop a original bot.
