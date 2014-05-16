@@ -103,7 +103,7 @@ my $runfile_data = <<'EOF';
 BOT_USER=__user_name__
 cd __base_dir__
 exec 2>&1
-exec setuidgid \$BOT_USER ./worker.pl
+exec setuidgid $BOT_USER ./worker.pl
 sleep 5 ### reconnect interval
 EOF
 
