@@ -3,6 +3,7 @@ requires 'JSON';
 requires 'PocketIO::Client::IO';
 requires 'URI';
 requires 'WWW::Mechanize';
+requires 'LWP::Protocol::https';
 
 ### for script/unruly_setup.pl
 requires 'File::Spec';

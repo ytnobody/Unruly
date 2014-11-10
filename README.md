@@ -28,8 +28,6 @@ Unruly - Yancha client with twitter auth
 
     $cv->wait;
 
-
-
 # DESCRIPTION
 
 Unruly is a client lib for Yancha [http://yancha.hachiojipm.org](http://yancha.hachiojipm.org).

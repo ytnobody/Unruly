@@ -4,7 +4,7 @@
       "ytnobody <ytnobody@gmail.com>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Minilla/v1.0.0, CPAN::Meta::Converter version 2.132140",
+   "generated_by" : "Minilla/v2.2.0, CPAN::Meta::Converter version 2.142690",
    "license" : [
       "perl_5"
    ],
@@ -28,8 +28,6 @@
    "prereqs" : {
       "configure" : {
          "requires" : {
-            "CPAN::Meta" : "0",
-            "CPAN::Meta::Prereqs" : "0",
             "Module::Build" : "0.38"
          }
       },
@@ -48,6 +46,7 @@
             "File::Spec" : "0",
             "IO::Handle" : "0",
             "JSON" : "0",
+            "LWP::Protocol::https" : "0",
             "PocketIO::Client::IO" : "0",
             "URI" : "0",
             "WWW::Mechanize" : "0",
